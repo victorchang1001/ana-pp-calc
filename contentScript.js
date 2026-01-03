@@ -538,6 +538,73 @@ function injectMilesAndPointsIntoPrice() {
 	});
 }
 
+function getRouteLinesForNewFareFlight(flightItem) {
+	if (!flightItem) return [];
+
+	const detailRoot = flightItem.querySelector(".p-vacant-seat01__detail");
+	const segments = [];
+
+	if (detailRoot) {
+		const blocks = detailRoot.querySelectorAll(".p-flight-detail01__block");
+		blocks.forEach((block) => {
+			const airports = block.querySelectorAll(
+				".p-flight-detail01__detail-airport"
+			);
+			if (airports.length >= 2) {
+				const fromName = (airports[0].textContent || "").trim();
+				const toName = (airports[airports.length - 1].textContent || "").trim();
+				if (fromName && toName) {
+					segments.push({ from: fromName, to: toName });
+				}
+			}
+		});
+		if (segments.length > 0) {
+			return buildRouteStringsFromSegments(segments);
+		}
+	}
+
+	const allAirports = flightItem.querySelectorAll(
+		".p-flight-detail01__detail-airport"
+	);
+	const names = [];
+	allAirports.forEach((el) => {
+		const name = (el.textContent || "").trim();
+		if (name) names.push(name);
+	});
+
+	if (names.length >= 2) {
+		const segs = [];
+		for (let i = 0; i < names.length - 1; i += 1) {
+			segs.push({ from: names[i], to: names[i + 1] });
+		}
+		return buildRouteStringsFromSegments(segs);
+	}
+
+	return [];
+}
+
+function buildRouteStringsFromSegments(segments) {
+	if (!Array.isArray(segments) || !segments.length) return [];
+
+	const codes = [];
+	for (let i = 0; i < segments.length; i += 1) {
+		const seg = segments[i];
+		if (!seg || !seg.from || !seg.to) continue;
+
+		const fromCode = airportNameToIataCode(seg.from) || seg.from;
+		const toCode = airportNameToIataCode(seg.to) || seg.to;
+
+		if (i === 0) {
+			codes.push(fromCode);
+		}
+		codes.push(toCode);
+	}
+
+	if (!codes.length) return [];
+
+	return [codes.join(" → ")];
+}
+
 function annotateNewFarePrices() {
 	const priceEmElements = document.querySelectorAll(
 		".p-vacant-seat01__cell .p-vacant-seat01__btn-price em"
@@ -608,6 +675,7 @@ function annotateNewFarePrices() {
 		// 適用ボタンは直行便のみ対象にする:
 		// 乗継便の計算には legBase1 / legBase2 が必須。
 		const useDirectBase = !isTransfer ? directBase : null;
+		const routeLines = getRouteLinesForNewFareFlight(flightItem);
 
 		if (priceNumber && (useDirectBase || (isTransfer && legBase1 && legBase2))) {
 			const routeMultiplier = 2;
@@ -653,6 +721,12 @@ function annotateNewFarePrices() {
 			extraLines.push(
 				`${rule.code}: base × ${ratePercent}% × 2 + ${rule.boarding}`
 			);
+		}
+
+		if (routeLines && routeLines.length) {
+			routeLines.forEach((route) => {
+				extraLines.push(route);
+			});
 		}
 
 		let html = baseHtml;

@@ -20,6 +20,7 @@
         "https://aswbe.ana.co.jp/*"
       ],
       "js": [
+        "airportCode.js",
         "contentScript.js"
       ],
       "run_at": "document_idle"
