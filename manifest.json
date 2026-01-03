@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "ANA PP Helper",
+  "description": "Show ANA domestic fare PP and 円/PP.",
+  "version": "1.0.0",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://aswbe-d.ana.co.jp/*",
+    "https://aswbe.ana.co.jp/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://aswbe-d.ana.co.jp/*",
+        "https://aswbe.ana.co.jp/*"
+      ],
+      "js": [
+        "contentScript.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
